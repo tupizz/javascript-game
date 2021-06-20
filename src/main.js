@@ -1,4 +1,4 @@
-import '../assets/styles/style.css';
+import '../public/assets/styles/style.css';
 import Phaser from 'phaser';
 import PhaserMatterCollisionPlugin from 'phaser-matter-collision-plugin';
 import { MainScene } from './main-scene';
@@ -11,7 +11,7 @@ const game = new Phaser.Game({
   parent: 'app',
   backgroundColor: '#999999',
   scale: {
-    zoom: 1.25,
+    zoom: 1.5,
   },
   scene: [
     MainScene,
@@ -19,7 +19,7 @@ const game = new Phaser.Game({
   physics: {
     default: 'matter',
     matter: {
-      debug: true,
+      debug: false,
       gravity: {
         y: 0,
       },

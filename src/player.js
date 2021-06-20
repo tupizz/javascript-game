@@ -1,7 +1,17 @@
 import Phaser from 'phaser';
 import constants from './constants';
+import { HealthBar } from './health-bar';
+import { InfoText } from './info-text';
 
 export class Player extends Phaser.Physics.Matter.Sprite {
+  static preload(scene) {
+    scene.load.atlas('male', 'assets/images/male/male.png', 'assets/images/male/male_atlas.json');
+    scene.load.animation('male_anim', 'assets/images/male/male_anim.json');
+    scene.load.spritesheet('items', 'assets/images/items/items.png', { frameWidth: 32, frameHeight: 32 });
+    scene.load.audio('player', 'assets/audio/player.mp3');
+    scene.load.audio('sword', 'assets/audio/sword.mp3');
+  }
+
   constructor({
     scene,
     x,
@@ -10,8 +20,14 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     frame,
   }) {
     super(scene.matter.world, x, y, texture, frame);
+    this.name = 'player';
     this.setDepth(2);
     this.scene.add.existing(this);
+    this.health = 100;
+
+    // Sound that emit when player is hurt
+    this.sound = this.scene.sound.add(this.name);
+    this.swordSound = this.scene.sound.add('sword');
 
     // Array of touching objects using collision system
     this.touching = [];
@@ -21,8 +37,8 @@ export class Player extends Phaser.Physics.Matter.Sprite {
 
     // Player Properties
     this.playerProps = {
-      walkSpeed: 1.5,
-      attackSpeed: 3,
+      walkSpeed: 2,
+      attackSpeed: 2,
       damage: 3,
     };
 
@@ -54,24 +70,35 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     this.createMiningCollisions(playerSensor);
     this.createPickupCollisions(playerCollider);
 
-    this.scene.input.on('pointermove', (pointer) => this.setFlipX(pointer.worldX < this.x));
-  }
+    // Health bar
+    this.hp = new HealthBar({ scene });
 
-  static preload(scene) {
-    scene.load.atlas(
-      'male',
-      '../assets/images/male/male.png',
-      '../assets/images/male/male_atlas.json',
-    );
-    scene.load.animation('male_anim', '../assets/images/male/male_anim.json');
-    scene.load.spritesheet('items', '../assets/images/items/items.png', { frameWidth: 32, frameHeight: 32 });
+    // Helper text
+    this.text = new InfoText({ scene: this.scene, x: this.x, y: this.y });
+
+    this.scene.input.on('pointermove', (pointer) => this.setFlipX(pointer.worldX < this.x));
   }
 
   get velocity() {
     return this.body.velocity;
   }
 
+  get dead() {
+    return this.health <= 0;
+  }
+
+  get position() {
+    return new Phaser.Math.Vector2(this.x, this.y);
+  }
+
   update() {
+    this.hp.update({ x: this.x, y: this.y, health: this.health });
+
+    // Update text helper
+    this.text.update(this);
+
+    if (this.dead) return;
+
     this.setPosition(
       this.body.position.x > 0 ? this.body.position.x : 0,
       this.body.position.y > 0 ? this.body.position.y : 0,
@@ -112,6 +139,13 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     this.configureWeaponRotationAndVelocity();
   }
 
+  onDeath() {
+    this.anims.stop();
+    this.setTexture('items', 0);
+    this.setOrigin(0.5, 0.5);
+    this.spriteWeapon.destroy();
+  }
+
   createPickupCollisions(playerCollider) {
     this.scene.matterCollision.addOnCollideStart({
       context: this.scene,
@@ -146,6 +180,15 @@ export class Player extends Phaser.Physics.Matter.Sprite {
     });
   }
 
+  hit(damage) {
+    this.text.sendMessage(`-${Math.round(damage)}`);
+    if (this.sound) this.sound.play();
+    this.swordSound.play();
+    this.health -= damage;
+
+    if (this.dead) this.onDeath();
+  }
+
   configureWeaponRotationAndVelocity() {
     const pointer = this.scene.input.activePointer;
     if (pointer.isDown) {
@@ -154,7 +197,7 @@ export class Player extends Phaser.Physics.Matter.Sprite {
       this.weaponRotation = 0;
     }
 
-    if (this.weaponRotation > 80) {
+    if (this.weaponRotation > 50) {
       this.whackStuff();
       this.weaponRotation = 0;
     }

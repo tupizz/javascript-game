@@ -9,6 +9,7 @@ export class Resource extends Phaser.Physics.Matter.Sprite {
     this.name = resource.type;
     this.health = 5;
     this.sound = this.scene.sound.add(this.name);
+    this.setDepth(10);
     this.x += this.width / 2;
     this.y -= this.height / 2;
     this.y += this.height * (yOrigin - 0.55);
@@ -24,12 +25,12 @@ export class Resource extends Phaser.Physics.Matter.Sprite {
   }
 
   static preload(scene) {
-    scene.load.spritesheet('items', '../assets/images/items/items.png', { frameWidth: 32, frameHeight: 32 });
-    scene.load.atlas('resources', '../assets/images/resources/resources.png', '../assets/images/resources/resources_atlas.json');
-    scene.load.audio('tree', '../assets/audio/tree.mp3');
-    scene.load.audio('bush', '../assets/audio/bush.mp3');
-    scene.load.audio('rock', '../assets/audio/rock.mp3');
-    scene.load.audio('pickup', '../assets/audio/pickup.mp3');
+    scene.load.spritesheet('items', 'assets/images/items/items.png', { frameWidth: 32, frameHeight: 32 });
+    scene.load.atlas('resources', 'assets/images/resources/resources.png', 'assets/images/resources/resources_atlas.json');
+    scene.load.audio('tree', 'assets/audio/tree.mp3');
+    scene.load.audio('bush', 'assets/audio/bush.mp3');
+    scene.load.audio('rock', 'assets/audio/rock.mp3');
+    scene.load.audio('pickup', 'assets/audio/pickup.mp3');
   }
 
   get dead() {

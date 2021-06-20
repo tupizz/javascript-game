@@ -1,17 +1,21 @@
 import Phaser from 'phaser';
+import { Enemy } from './enemy';
 import { Player } from './player';
 import { Resource } from './resource';
 
 export class MainScene extends Phaser.Scene {
   constructor() {
     super('MainScene');
+    this.enemies = [];
   }
 
   preload() {
     Player.preload(this);
     Resource.preload(this);
-    this.load.image('tiles', '../assets/map/RPG Nature Tileset.png');
-    this.load.tilemapTiledJSON('map', '../assets/map/map.json');
+    Enemy.preload(this);
+    this.load.setBaseURL('../');
+    this.load.image('tiles', 'assets/map/RPG Nature Tileset.png');
+    this.load.tilemapTiledJSON('map', 'assets/map/map.json');
   }
 
   create() {
@@ -37,18 +41,18 @@ export class MainScene extends Phaser.Scene {
       .getObjectLayer('resources')
       .objects.forEach((resource) => new Resource({ scene: this, resource }));
 
+    // Add enemies to our scene
+    this.map
+      .getObjectLayer('enemies')
+      .objects.forEach((enemy) => {
+        const newEnemy = new Enemy({ scene: this, enemy });
+        this.enemies.push(newEnemy);
+      });
+
     this.player = new Player({
       scene: this,
       x: 200,
       y: 200,
-      texture: 'male',
-      frame: 'townsfolk_m_idle_1',
-    });
-
-    const player = new Player({
-      scene: this,
-      x: 100,
-      y: 50,
       texture: 'male',
       frame: 'townsfolk_m_idle_1',
     });
@@ -61,7 +65,7 @@ export class MainScene extends Phaser.Scene {
       right: Phaser.Input.Keyboard.KeyCodes.D,
     });
     const camera = this.cameras.main;
-    camera.zoom = 1.8;
+    camera.zoom = 2.5;
     camera.startFollow(this.player);
     camera.setLerp(0.1, 0.1);
     camera.setBounds(0, 0, this.game.config.width, this.game.config.height);
@@ -69,5 +73,7 @@ export class MainScene extends Phaser.Scene {
 
   update() {
     this.player.update();
+
+    this.enemies.forEach((enemy) => enemy.update());
   }
 }
